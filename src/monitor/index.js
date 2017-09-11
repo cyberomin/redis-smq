@@ -2,8 +2,6 @@
 
 const Socket = require('socket.io');
 const http = require('http');
-const Koa = require('koa');
-const send = require('koa-send');
 const redis = require('redis');
 const statsFrontend = require('../stats-frontend');
 
@@ -26,14 +24,6 @@ function monitor(config = {}) {
          * @param {function} cb
          */
         listen(cb) {
-            /**
-             * KOA setup
-             */
-            const app = new Koa();
-            app.use(async (ctx) => {
-                if (ctx.path === '/') await send(ctx, './assets/index.html', { root: __dirname });
-                else await send(ctx, ctx.path, { root: __dirname });
-            });
 
             /**
              * Socket.io setup
@@ -43,7 +33,10 @@ function monitor(config = {}) {
             /**
              * HTTP setup
              */
-            const server = http.createServer(app.callback());
+            const server = http.createServer((request, response) => {
+                response.writeHead(200, {"Content-Type": "text/html"});
+                response.end();
+            });
             io.attach(server);
             server.listen(config.monitor.port, config.monitor.host, () => {
                 /**
